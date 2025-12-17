@@ -2,57 +2,89 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="style.css">
-    <title>SnakeGame</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="style.css" />
+    <title>Snake Game</title>
 </head>
 
 <body>
+
+    <!-- HEADER -->
     <header>
         <div class="info">High Score : <span id="highScore">0</span></div>
         <div class="info">Score : <span id="score">0</span></div>
         <div class="info">Time : <span id="time">00:00</span></div>
         <div id="restartGame">Restart Game</div>
     </header>
+
+    <!-- GAME AREA -->
     <main>
         <div class="gameArea"></div>
     </main>
+
+    <!-- FOOTER -->
     <footer>
         <div class="socials">
             <a href="https://github.com/xthxrv-xgrey" target="_blank" class="platform">
-                <img src="./images/github-cat.png" alt="GitHub">
+                <img src="./images/github-cat.png" alt="GitHub" />
                 <span>GitHub</span>
             </a>
 
             <a href="https://linkedin.com/in/yourusername" target="_blank" class="platform">
-                <img src="./images/linkedIn.png" alt="LinkedIn">
+                <img src="./images/linkedIn.png" alt="LinkedIn" />
                 <span>LinkedIn</span>
             </a>
         </div>
         <span>Made with ❤️ by Atharv</span>
     </footer>
 
-    <!-- Game Over Overlay -->
+    <!-- GAME OVER OVERLAY -->
     <div id="gameOverOverlay" class="overlay hidden">
         <div class="neonModal">
             <button id="closeGameOver" class="closeBtn">✖</button>
             <h1 id="gameOverTitle">Game Over</h1>
             <p id="gameOverMsg">Try again!</p>
+
             <div class="scoreBox">
                 <span>Your Score:</span>
                 <span id="finalScore">0</span>
             </div>
+
             <div class="scoreBox">
                 <span>High Score:</span>
                 <span id="finalHighScore">0</span>
             </div>
-            <button id="restartFromModal" class="restartBtn">Play Again</button>
+
+            <button id="restartFromModal" class="restartBtn">
+                Play Again
+            </button>
+        </div>
+    </div>
+
+    <!-- DIFFICULTY SELECTION OVERLAY -->
+    <div id="difficultyOverlay" class="overlay">
+        <div class="neonModal">
+            <h1>🎮 Select Difficulty</h1>
+            <p>Choose your challenge</p>
+
+            <button class="restartBtn" onclick="setDifficulty('easy')">
+                🟢 Easy
+            </button>
+
+            <button class="restartBtn" onclick="setDifficulty('medium')">
+                🟡 Medium
+            </button>
+
+            <button class="restartBtn" onclick="setDifficulty('hard')">
+                🔴 Hard
+            </button>
         </div>
     </div>
 
     <!-- SCRIPT -->
     <script src="script.js"></script>
+
 </body>
 
 </html>

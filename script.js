@@ -1,71 +1,97 @@
 /***********************************
- * 1. BASIC GAME SETUP
+ * 1. DOM REFERENCES
  ***********************************/
-let board = document.querySelector(".gameArea");
-let blockSize = 60;
+const board = document.querySelector(".gameArea");
+const difficultyOverlay = document.getElementById("difficultyOverlay");
+const gameOverOverlay = document.getElementById("gameOverOverlay");
 
-// Calculate rows and columns based on board size
-const rows = Math.floor(board.clientHeight / blockSize);
-const cols = Math.floor(board.clientWidth / blockSize);
-
-// Setup CSS Grid
-board.style.gridTemplateRows = `repeat(${rows}, ${blockSize}px)`;
-board.style.gridTemplateColumns = `repeat(${cols}, ${blockSize}px)`;
-
-// Store all grid cells by "x-y"
-let blocks = {};
+const scoreEl = document.getElementById("score");
+const highScoreEl = document.getElementById("highScore");
+const timeEl = document.getElementById("time");
 
 /***********************************
- * 2. GAME STATE VARIABLES
+ * 2. DIFFICULTY SETTINGS
  ***********************************/
-let gameStarted = false;
-let direction = null;
-let speed = 180;
+const difficultySettings = {
+  easy: { blockSize: 60, speed: 180 },
+  medium: { blockSize: 50, speed: 140 },
+  hard: { blockSize: 40, speed: 100 },
+};
 
-let snake = [
-  { x: 8, y: 6 },
-  { x: 8, y: 5 },
-  { x: 8, y: 4 },
-];
+/***********************************
+ * 3. GAME STATE
+ ***********************************/
+let blockSize;
+let speed;
 
+let rows;
+let cols;
+let blocks = {};
+
+let snake = [];
 let food = null;
+
+let direction = null;
+let gameStarted = false;
+
 let score = 0;
 let highScore = localStorage.getItem("highScore") || 0;
+
 let timer = 0;
 let timerInterval = null;
 let gameLoop = null;
 
 /***********************************
- * 3. CREATE THE BOARD
+ * 4. BOARD SETUP
  ***********************************/
-for (let i = 0; i < rows; i++) {
-  for (let j = 0; j < cols; j++) {
-    let block = document.createElement("div");
-    block.classList.add("block");
-    blocks[`${i}-${j}`] = block;
-    board.appendChild(block);
+function setupBoard() {
+  board.innerHTML = "";
+  blocks = {};
+
+  rows = Math.floor(board.clientHeight / blockSize);
+  cols = Math.floor(board.clientWidth / blockSize);
+
+  board.style.gridTemplateRows = `repeat(${rows}, ${blockSize}px)`;
+  board.style.gridTemplateColumns = `repeat(${cols}, ${blockSize}px)`;
+
+  for (let i = 0; i < rows; i++) {
+    for (let j = 0; j < cols; j++) {
+      const block = document.createElement("div");
+      block.classList.add("block");
+      blocks[`${i}-${j}`] = block;
+      board.appendChild(block);
+    }
   }
 }
 
 /***********************************
- * 4. RENDER & CLEAR FUNCTIONS
+ * 5. DIFFICULTY SELECTION
+ ***********************************/
+function setDifficulty(level) {
+  const settings = difficultySettings[level];
+
+  blockSize = settings.blockSize;
+  speed = settings.speed;
+
+  difficultyOverlay.classList.add("hidden");
+  restartGame();
+}
+
+/***********************************
+ * 6. RENDER FUNCTIONS
  ***********************************/
 function renderSnake() {
-  snake.forEach((pos, idx) => {
-    let block = blocks[`${pos.x}-${pos.y}`];
+  snake.forEach((seg, idx) => {
+    const block = blocks[`${seg.x}-${seg.y}`];
     if (!block) return;
 
-    if (idx === 0) {
-      block.classList.add("snakeHead");
-    } else {
-      block.classList.add("snakeBody");
-    }
+    block.classList.add(idx === 0 ? "snakeHead" : "snakeBody");
   });
 }
 
 function clearSnake() {
-  snake.forEach((pos) => {
-    const block = blocks[`${pos.x}-${pos.y}`];
+  snake.forEach((seg) => {
+    const block = blocks[`${seg.x}-${seg.y}`];
     if (!block) return;
     block.classList.remove("snakeHead", "snakeBody");
   });
@@ -84,7 +110,7 @@ function clearFood() {
 }
 
 /***********************************
- * 5. FOOD LOGIC
+ * 7. FOOD LOGIC
  ***********************************/
 function generateFood() {
   let pos;
@@ -93,14 +119,14 @@ function generateFood() {
       x: Math.floor(Math.random() * rows),
       y: Math.floor(Math.random() * cols),
     };
-    const invalid = snake.some((seg) => seg.x === pos.x && seg.y === pos.y);
-    if (!invalid) break;
+    const hitSnake = snake.some((seg) => seg.x === pos.x && seg.y === pos.y);
+    if (!hitSnake) break;
   }
   food = pos;
 }
 
 /***********************************
- * 6. MOVEMENT & COLLISION
+ * 8. MOVEMENT & COLLISION
  ***********************************/
 function checkSelfCollision(head) {
   return snake.slice(1).some((seg) => seg.x === head.x && seg.y === head.y);
@@ -111,6 +137,7 @@ function moveSnake() {
 
   const head = snake[0];
   let newHead;
+
   if (direction === "up") newHead = { x: head.x - 1, y: head.y };
   if (direction === "down") newHead = { x: head.x + 1, y: head.y };
   if (direction === "left") newHead = { x: head.x, y: head.y - 1 };
@@ -129,13 +156,13 @@ function moveSnake() {
 
   snake.unshift(newHead);
 
-  // Self-collision
+  // Self collision
   if (checkSelfCollision(newHead)) {
     endGame("🐍 You bit yourself!");
     return;
   }
 
-  // Food collision
+  // Food
   if (food && newHead.x === food.x && newHead.y === food.y) {
     score++;
     updateScore();
@@ -148,19 +175,18 @@ function moveSnake() {
 }
 
 /***********************************
- * 7. KEYBOARD CONTROLS
+ * 9. CONTROLS
  ***********************************/
 document.addEventListener("keydown", (e) => {
-  if (e.key === "ArrowUp" || e.key === "w" || e.key === "W") setDirection("up");
-  if (e.key === "ArrowDown" || e.key === "s" || e.key === "S")
-    setDirection("down");
-  if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A")
-    setDirection("left");
-  if (e.key === "ArrowRight" || e.key === "d" || e.key === "D")
-    setDirection("right");
+  if (e.key === "ArrowUp" || e.key === "w") setDirection("up");
+  if (e.key === "ArrowDown" || e.key === "s") setDirection("down");
+  if (e.key === "ArrowLeft" || e.key === "a") setDirection("left");
+  if (e.key === "ArrowRight" || e.key === "d") setDirection("right");
 });
 
-document.getElementById("restartGame").addEventListener("click", restartGame);
+document.getElementById("restartGame").addEventListener("click", () => {
+  difficultyOverlay.classList.remove("hidden");
+});
 
 function setDirection(newDir) {
   const opposite = {
@@ -169,6 +195,7 @@ function setDirection(newDir) {
     left: "right",
     right: "left",
   };
+
   if (direction !== opposite[newDir]) {
     direction = newDir;
     if (!gameStarted) {
@@ -179,27 +206,28 @@ function setDirection(newDir) {
 }
 
 /***********************************
- * 8. SCORE & TIMER
+ * 10. SCORE & TIMER
  ***********************************/
 function updateScore() {
-  document.getElementById("score").textContent = score;
+  scoreEl.textContent = score;
+
   if (score > highScore) {
     highScore = score;
     localStorage.setItem("highScore", highScore);
-    document.getElementById("highScore").textContent = highScore;
+    highScoreEl.textContent = highScore;
   }
 }
 
 function startTimer() {
   if (timerInterval) return;
+
   timerInterval = setInterval(() => {
     timer++;
-    let min = Math.floor(timer / 60);
-    let sec = timer % 60;
-    document.getElementById("time").textContent = `${String(min).padStart(
-      2,
-      "0"
-    )}:${String(sec).padStart(2, "0")}`;
+    const min = Math.floor(timer / 60);
+    const sec = timer % 60;
+    timeEl.textContent = `${String(min).padStart(2, "0")}:${String(
+      sec
+    ).padStart(2, "0")}`;
   }, 1000);
 }
 
@@ -207,75 +235,12 @@ function resetTimer() {
   clearInterval(timerInterval);
   timerInterval = null;
   timer = 0;
-  document.getElementById("time").textContent = "00:00";
+  timeEl.textContent = "00:00";
 }
 
 /***********************************
- * 9. GAME LOOP & MANAGEMENT
+ * 11. GAME LOOP
  ***********************************/
-function endGame(deathMessage) {
-  gameStarted = false;
-  clearInterval(gameLoop);
-  gameLoop = null;
-  resetTimer();
-
-  const overlay = document.getElementById("gameOverOverlay");
-  const title = document.getElementById("gameOverTitle");
-  const msg = document.getElementById("gameOverMsg");
-
-  document.getElementById("finalScore").textContent = score;
-  document.getElementById("finalHighScore").textContent = highScore;
-
-  // Display the death message
-  if (deathMessage) {
-    msg.textContent = deathMessage;
-  }
-
-  // Set title based on score
-  if (score >= highScore && score > 0) {
-    title.textContent = "🎉 NEW HIGH SCORE!";
-  } else if (score >= 15) {
-    title.textContent = "🔥 Nice Run!";
-  } else {
-    title.textContent = "💪 Better Luck Next Time";
-  }
-
-  overlay.classList.remove("hidden");
-}
-
-// Close and restart button logic
-document.getElementById("closeGameOver").addEventListener("click", () => {
-  document.getElementById("gameOverOverlay").classList.add("hidden");
-});
-
-document.getElementById("restartFromModal").addEventListener("click", () => {
-  document.getElementById("gameOverOverlay").classList.add("hidden");
-  restartGame();
-});
-
-function restartGame() {
-  clearSnake();
-  clearFood();
-
-  snake = [
-    { x: 8, y: 6 },
-    { x: 8, y: 5 },
-    { x: 8, y: 4 },
-  ];
-  direction = null;
-  score = 0;
-
-  document.getElementById("score").textContent = score;
-  generateFood();
-  renderSnake();
-  renderFood();
-  resetTimer();
-  gameStarted = false;
-
-  if (gameLoop) clearInterval(gameLoop);
-  gameLoop = setInterval(mainLoop, speed);
-}
-
 function mainLoop() {
   if (!gameStarted) return;
   clearSnake();
@@ -283,9 +248,61 @@ function mainLoop() {
   renderSnake();
 }
 
-// Initial setup
-document.getElementById("highScore").textContent = highScore;
-generateFood();
-renderSnake();
-renderFood();
-gameLoop = setInterval(mainLoop, speed);
+/***********************************
+ * 12. GAME OVER
+ ***********************************/
+function endGame(message) {
+  gameStarted = false;
+  clearInterval(gameLoop);
+  resetTimer();
+
+  document.getElementById("finalScore").textContent = score;
+  document.getElementById("finalHighScore").textContent = highScore;
+  document.getElementById("gameOverMsg").textContent = message;
+
+  gameOverOverlay.classList.remove("hidden");
+
+  setTimeout(() => {
+    gameOverOverlay.classList.add("hidden");
+    difficultyOverlay.classList.remove("hidden");
+  }, 1200);
+}
+
+/***********************************
+ * 13. RESTART GAME
+ ***********************************/
+function restartGame() {
+  clearInterval(gameLoop);
+  clearSnake();
+  clearFood();
+
+  setupBoard();
+
+  const startX = Math.floor(rows / 2);
+  const startY = Math.floor(cols / 2);
+
+  snake = [
+    { x: startX, y: startY },
+    { x: startX, y: startY - 1 },
+    { x: startX, y: startY - 2 },
+  ];
+
+  direction = null;
+  score = 0;
+  gameStarted = false;
+
+  scoreEl.textContent = score;
+
+  generateFood();
+  renderSnake();
+  renderFood();
+  resetTimer();
+
+  gameLoop = setInterval(mainLoop, speed);
+}
+
+/***********************************
+ * 14. INIT
+ ***********************************/
+highScoreEl.textContent = highScore;
+difficultyOverlay.classList.remove("hidden");

@@ -8,7 +8,8 @@ This project helped me understand how JavaScript interacts with the DOM and how 
 ---
 
 ## 🚀 Live Demo
-👉 (Add your Vercel link here after deployment)
+👉 https://neon-snake-game-dun.vercel.app
+
 
 ---
 

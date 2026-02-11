@@ -1,4 +1,21 @@
 /***********************************
+ * AUDIO
+ ***********************************/
+const bgMusic = new Audio("./sounds/bg-music.mp3");
+bgMusic.loop = true;
+bgMusic.volume = 0.3;
+
+const moveSound = new Audio("./sounds/move.mp3");
+moveSound.volume = 0.05;
+
+const eatSound = new Audio("./sounds/eat.mp3");
+eatSound.volume = 0.6;
+
+const gameOverSound = new Audio("./sounds/gameover.mp3");
+gameOverSound.volume = 0.6;
+
+
+/***********************************
  * 1. DOM REFERENCES
  ***********************************/
 const board = document.querySelector(".gameArea");
@@ -166,6 +183,10 @@ function moveSnake() {
   if (food && newHead.x === food.x && newHead.y === food.y) {
     score++;
     updateScore();
+
+    eatSound.currentTime = 0;
+    eatSound.play(); // 🍎 EAT SOUND
+
     clearFood();
     generateFood();
     renderFood();
@@ -201,6 +222,7 @@ function setDirection(newDir) {
     if (!gameStarted) {
       gameStarted = true;
       startTimer();
+      bgMusic.play(); // 🔊 START MUSIC
     }
   }
 }
@@ -246,6 +268,10 @@ function mainLoop() {
   clearSnake();
   moveSnake();
   renderSnake();
+
+  moveSound.currentTime = 0;
+  moveSound.play(); // 🐍 subtle movement sound
+
 }
 
 /***********************************
@@ -255,6 +281,12 @@ function endGame(message) {
   gameStarted = false;
   clearInterval(gameLoop);
   resetTimer();
+
+  bgMusic.pause();
+  bgMusic.currentTime = 0;
+
+  gameOverSound.currentTime = 0;
+  gameOverSound.play(); // 💀 GAME OVER
 
   document.getElementById("finalScore").textContent = score;
   document.getElementById("finalHighScore").textContent = highScore;

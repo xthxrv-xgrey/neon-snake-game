@@ -294,10 +294,18 @@ function endGame(message) {
 
   gameOverOverlay.classList.remove("hidden");
 
-  setTimeout(() => {
-    gameOverOverlay.classList.add("hidden");
-    difficultyOverlay.classList.remove("hidden");
-  }, 1200);
+  // Close Game Over (X button)
+document.getElementById("closeGameOver").addEventListener("click", () => {
+  gameOverOverlay.classList.add("hidden");
+  difficultyOverlay.classList.remove("hidden");
+});
+
+// Play Again button
+document.getElementById("restartFromModal").addEventListener("click", () => {
+  gameOverOverlay.classList.add("hidden");
+  difficultyOverlay.classList.remove("hidden");
+});
+
 }
 
 /***********************************
